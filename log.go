@@ -24,10 +24,13 @@ type Logger struct {
 	file  *os.File
 }
 
-func (logger *Logger) Start(level int, writer io.Writer, filePath string) (err error) {
+// Level is required and is one of the constants above. If file name is provided, we'll create that
+// file and use it's writer. If writer is provided instead of fileName, we'll write to it. Finally
+// if writer is nil and fileName is "", we write to standard out.
+func (logger *Logger) Start(level int, writer io.Writer, fileName string) (err error) {
 	logger.level = level
-	if len(filePath) > 0 {
-		logger.file, err = os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if len(fileName) > 0 {
+		logger.file, err = os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
 			log.Println(err)
 		}
@@ -45,7 +48,7 @@ func (logger *Logger) Stop() (err error) {
 	if logger.file != nil {
 		err = logger.file.Close()
 	}
-	return err
+	return
 }
 
 func (logger *Logger) Error(s string) {
