@@ -2,13 +2,14 @@ package logger
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	"testing"
 )
 
 func TestLoggerStartWithWriter(t *testing.T) {
 	var resultBuffer bytes.Buffer
-	log := Logger{}
+	log := Slogger{}
 	err := log.Start(ERROR, &resultBuffer, "")
 
 	if err != nil {
@@ -18,7 +19,7 @@ func TestLoggerStartWithWriter(t *testing.T) {
 
 func TestLoggerStartWithFile(t *testing.T) {
 	path := "slack_msg_svc.log"
-	log := Logger{}
+	log := Slogger{}
 	err := log.Start(ERROR, nil, path)
 
 	if err != nil {
@@ -27,7 +28,7 @@ func TestLoggerStartWithFile(t *testing.T) {
 }
 
 func TestLoggerStartWithStdOut(t *testing.T) {
-	log := Logger{}
+	log := Slogger{}
 	err := log.Start(DEBUG, nil, "")
 	log.Debug("This message should appear on StdOut")
 
@@ -36,9 +37,39 @@ func TestLoggerStartWithStdOut(t *testing.T) {
 	}
 }
 
+// Make sure we can call the embedded logger
+func TestLoggerEmbeddedType(t *testing.T) {
+	var resultBuffer bytes.Buffer
+	msg := "Verify we can access the Println method on the embedded logger"
+	log := Slogger{}
+	log.Start(ERROR, &resultBuffer, "")
+	log.Println(msg)
+
+	fmt.Printf(resultBuffer.String())
+	if !strings.Contains(resultBuffer.String(), msg) {
+		t.Errorf("Failed to access the Println method on logger.")
+	}
+}
+
+// Make sure we can call the embedded logger
+func TestLoggerAddPrefix(t *testing.T) {
+	var resultBuffer bytes.Buffer
+	msg := "Verify we can add a prefix to the embedded logger"
+	prefix := "Prefix: "
+	log := Slogger{}
+	log.Start(ERROR, &resultBuffer, "")
+	log.SetPrefix(prefix)
+	log.Println(msg)
+
+	fmt.Printf(resultBuffer.String())
+	if !strings.Contains(resultBuffer.String(), prefix) {
+		t.Errorf("Failed to add a prefix to logger.")
+	}
+}
+
 func TestLoggerDebugLevel(t *testing.T) {
 	var resultBuffer bytes.Buffer
-	log := Logger{}
+	log := Slogger{}
 	log.Start(DEBUG, &resultBuffer, "")
 
 	msg := "Here is a debug message"
@@ -65,7 +96,7 @@ func TestLoggerDebugLevel(t *testing.T) {
 
 func TestLoggerErrorLevel(t *testing.T) {
 	var resultBuffer bytes.Buffer
-	log := Logger{}
+	log := Slogger{}
 	log.Start(ERROR, &resultBuffer, "")
 
 	msg := "Here is a debug message"
@@ -91,7 +122,7 @@ func TestLoggerErrorLevel(t *testing.T) {
 }
 
 func TestSample(t *testing.T) {
-	log := Logger{}
+	log := Slogger{}
 	log.Start(INFO, nil, "myproject.log")
 	log.Warning("Danger Will Smith")
 	log.Stop()

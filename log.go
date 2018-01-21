@@ -1,7 +1,8 @@
 package logger
+
 // Usage: Create a logger that writes all ERROR, WARNING and INFO messages to a file.
 // DEBUG messages will not be included.
-//		log := Logger{}
+//		log := Slogger{}
 //		log.Start(INFO, nil, "myproject.log")
 //		log.Warning("Danger Will Smith")
 //		log.Stop()
@@ -19,58 +20,61 @@ const (
 	DEBUG   = 4
 )
 
-type Logger struct {
+type Slogger struct {
 	level int
 	file  *os.File
+	*log.Logger
+	prefix string
+	flags  int
 }
 
 // Level is required and is one of the constants above. If file name is provided, we'll create that
 // file and use it's writer. If writer is provided instead of fileName, we'll write to it. Finally
 // if writer is nil and fileName is "", we write to standard out.
-func (logger *Logger) Start(level int, writer io.Writer, fileName string) (err error) {
+func (logger *Slogger) Start(level int, writer io.Writer, fileName string) (err error) {
 	logger.level = level
+	logger.flags = log.Ldate | log.Ltime
+	logger.Logger = log.New(os.Stdout, logger.prefix, logger.flags)
 	if len(fileName) > 0 {
 		logger.file, err = os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
-			log.Println(err)
+			logger.Logger.Println(err)
+		} else {
+			logger.Logger.SetOutput(logger.file)
 		}
-		log.SetOutput(logger.file)
 	} else if writer != nil {
-		log.SetOutput(writer)
-	} else {
-		log.SetOutput(os.Stdout)
+		logger.Logger.SetOutput(writer)
 	}
-
 	return
 }
 
-func (logger *Logger) Stop() (err error) {
+func (logger *Slogger) Stop() (err error) {
 	if logger.file != nil {
 		err = logger.file.Close()
 	}
 	return
 }
 
-func (logger *Logger) Error(s string) {
+func (logger *Slogger) Error(s string) {
 	if logger.level >= ERROR {
-		log.Println(s)
+		logger.Logger.Println(s)
 	}
 }
 
-func (logger *Logger) Warning(s string) {
+func (logger *Slogger) Warning(s string) {
 	if logger.level >= WARNING {
-		log.Println(s)
+		logger.Logger.Println(s)
 	}
 }
 
-func (logger *Logger) Info(s string) {
+func (logger *Slogger) Info(s string) {
 	if logger.level >= INFO {
-		log.Println(s)
+		logger.Logger.Println(s)
 	}
 }
 
-func (logger *Logger) Debug(s string) {
+func (logger *Slogger) Debug(s string) {
 	if logger.level >= DEBUG {
-		log.Println(s)
+		logger.Logger.Println(s)
 	}
 }
