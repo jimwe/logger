@@ -2,7 +2,7 @@ package logger
 
 // Usage: Create a logger that writes all ERROR, WARNING and INFO messages to a file.
 // DEBUG messages will not be included.
-//		log := Slogger{}
+//		log := Logger{}
 //		log.Start(INFO, nil, "myproject.log")
 //		log.Warning("Danger Will Smith")
 //		log.Stop()
@@ -13,6 +13,13 @@ import (
 	"os"
 )
 
+type ILogger interface {
+	Debug(string)
+	Info(string)
+	Warning(string)
+	Error(string)
+}
+
 const (
 	ERROR   = 1
 	WARNING = 2
@@ -20,7 +27,7 @@ const (
 	DEBUG   = 4
 )
 
-type Slogger struct {
+type Logger struct {
 	level int
 	file  *os.File
 	*log.Logger
@@ -31,7 +38,7 @@ type Slogger struct {
 // Level is required and is one of the constants above. If file name is provided, we'll create that
 // file and use it's writer. If writer is provided instead of fileName, we'll write to it. Finally
 // if writer is nil and fileName is "", we write to standard out.
-func (logger *Slogger) Start(level int, writer io.Writer, fileName string) (err error) {
+func (logger *Logger) Start(level int, writer io.Writer, fileName string) (err error) {
 	logger.level = level
 	logger.flags = log.Ldate | log.Ltime
 	logger.Logger = log.New(os.Stdout, logger.prefix, logger.flags)
@@ -48,33 +55,33 @@ func (logger *Slogger) Start(level int, writer io.Writer, fileName string) (err 
 	return
 }
 
-func (logger *Slogger) Stop() (err error) {
+func (logger *Logger) Stop() (err error) {
 	if logger.file != nil {
 		err = logger.file.Close()
 	}
 	return
 }
 
-func (logger *Slogger) Error(s string) {
+func (logger Logger) Error(s string) {
 	if logger.level >= ERROR {
-		logger.Logger.Println(s)
+		logger.Logger.Println("[ERROR]", s)
 	}
 }
 
-func (logger *Slogger) Warning(s string) {
+func (logger Logger) Warning(s string) {
 	if logger.level >= WARNING {
-		logger.Logger.Println(s)
+		logger.Logger.Println("[WARN]", s)
 	}
 }
 
-func (logger *Slogger) Info(s string) {
+func (logger Logger) Info(s string) {
 	if logger.level >= INFO {
-		logger.Logger.Println(s)
+		logger.Logger.Println("[INFO]", s)
 	}
 }
 
-func (logger *Slogger) Debug(s string) {
+func (logger Logger) Debug(s string) {
 	if logger.level >= DEBUG {
-		logger.Logger.Println(s)
+		logger.Logger.Println("[DEBUG]", s)
 	}
 }
